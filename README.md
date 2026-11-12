@@ -99,6 +99,7 @@ landrun [options] <command> [args...]
 - `--bind-udp <port>`: Allow binding to specified UDP port or port range (Landlock ABI v10+; can be specified multiple times or as comma-separated values)
 - `--connect-udp <port>`: Allow connecting/sending to specified UDP port or port range (Landlock ABI v10+; can be specified multiple times or as comma-separated values)
 - `--env <var>`: Environment variable to pass to the sandboxed command (format: KEY=VALUE or just KEY to pass current value)
+- `--inherit-fd <fd>`: Keep an inherited file descriptor open in the sandboxed command (can be specified multiple times); all descriptors except 0, 1 and 2 are closed before exec unless listed here
 - `--best-effort`: Use best effort mode, falling back to less restrictive sandbox if necessary [default: disabled]
 - `--log-level <level>`: Set logging level (error, info, debug) [default: "error"]
 - `--unrestricted-network`: Allows unrestricted network access (disables all network restrictions)
@@ -122,6 +123,7 @@ landrun [options] <command> [args...]
 - Paths can be specified either using multiple flags or as comma-separated values (e.g., `--ro /usr,/lib,/home`)
 - If no paths or network rules are specified and neither unrestricted flag is set, landrun will apply maximum restrictions (denying all access)
 - By default, IPC scoping is restricted: the sandboxed process cannot connect to abstract UNIX sockets or send signals to processes outside its Landlock domain (ABI v6+). Use `--unrestricted-scoped` if this breaks your workload (e.g. some X11 or D-Bus setups)
+- By default, inherited file descriptors other than stdin/stdout/stderr are closed before the command runs, so open files of the parent process (e.g. pipeline log files) cannot be used to bypass `--ro`/unauthorized path restrictions. Use `--inherit-fd <fd>` to explicitly keep specific descriptors; the close-on-exec flag is cleared for whitelisted descriptors so they survive exec
 - On ABI v9+ kernels, connecting to pathname UNIX domain sockets created outside the sandbox (e.g. DNS/NSS via `nscd`, D-Bus, database sockets) is restricted. Grant access to specific sockets with `--unix <path>`
 
 ### Environment Variables

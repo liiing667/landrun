@@ -80,6 +80,10 @@ func newApp() *cli.Command {
 				Name:  "env",
 				Usage: "Environment variables to pass to the sandboxed command (KEY=VALUE or just KEY to pass current value)",
 			},
+			&cli.IntSliceFlag{
+				Name:  "inherit-fd",
+				Usage: "Keep this inherited file descriptor open in the sandboxed command (repeatable); all descriptors except 0, 1 and 2 are closed before exec unless listed here",
+			},
 			&cli.BoolFlag{
 				Name:  "unrestricted-filesystem",
 				Usage: "Allow unrestricted filesystem access",
@@ -136,6 +140,11 @@ func newApp() *cli.Command {
 				log.Fatal("Missing command to run")
 			}
 
+			inheritFDs := c.IntSlice("inherit-fd")
+			if err := exec.ValidateInheritFDs(inheritFDs); err != nil {
+				log.Fatal("Invalid --inherit-fd configuration: %v", err)
+			}
+
 			binary, err := osexec.LookPath(args[0])
 			if err != nil {
 				log.Fatal("Failed to find binary: %v", err)
@@ -156,7 +165,7 @@ func newApp() *cli.Command {
 				log.Fatal("Failed to apply sandbox: %v", err)
 			}
 
-			return exec.Run(args, envVars)
+			return exec.Run(args, envVars, inheritFDs)
 		},
 	}
 }

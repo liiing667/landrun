@@ -125,6 +125,30 @@ func TestFlagParsingAndBuildConfig(t *testing.T) {
 	}
 }
 
+func TestInheritFDFlagParsing(t *testing.T) {
+	app := newApp()
+	var capturedFDs []int
+	app.Action = func(ctx context.Context, c *cli.Command) error {
+		capturedFDs = c.IntSlice("inherit-fd")
+		return nil
+	}
+
+	args := []string{
+		"landrun",
+		"--inherit-fd", "3",
+		"--inherit-fd", "7",
+		"true",
+	}
+
+	if err := app.Run(context.Background(), args); err != nil {
+		t.Fatalf("unexpected error running app: %v", err)
+	}
+
+	if !reflect.DeepEqual(capturedFDs, []int{3, 7}) {
+		t.Errorf("inherit-fd = %v, want [3, 7]", capturedFDs)
+	}
+}
+
 func TestFlagParsingCommaSeparatedUDPPorts(t *testing.T) {
 	app := newApp()
 	var capturedCfg sandbox.Config
